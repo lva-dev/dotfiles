@@ -2,8 +2,10 @@
 # ~/.bash_aliases
 #
 
-# aliases builtin commands
+# Aliases for builtin commands
 
+alias '..'='cd ..'
+alias '...'='cd ../..'
 for ((n = 1; n <= 10; n++)); do
     alias_name=".$(for ((i = 0; i < n; i++)); do echo -n '.'; done)"
     alias_value="cd $(for ((i = 0; i < n; i++)); do echo -n '../'; done)"
@@ -22,11 +24,14 @@ alias less='less -r'   # raw control characters
 alias whence='type -a' # where, of a sort
 alias df='df -h'
 alias du='du -h'
-alias mktempd='mktemp -d'
+alias tempd='cd "$(mktemp -d)"'
 alias restart='tput clear; exec bash -l'
+alias rm='echo "\"rm\" has been disabled. Use \"trash\" instead." >&2'
+alias open='xdg-open'
 
-# other commands
-alias gdb='gdb -q'
 
+# Other commands
 command -v clang >/dev/null && alias cc='clang'
 command -v xclip >/dev/null && alias clip='xclip -selection clipboard'
+alias gdb='gdb -q'
+alias google-chrome='google-chrome --profile-directory=Default'
