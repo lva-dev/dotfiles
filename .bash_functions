@@ -2,12 +2,16 @@
 # ~/.bash_functions
 #
 
-path() {
+# Usage: path
+# Prints the paths in PATH, split by newlines.
+function path() {
 	local SPLITPATH
 	IFS=: read -r -a SPLITPATH <<<"$PATH" && for path in "${SPLITPATH[@]}"; do echo "$path":; done
 }
 
-newf() {
+# Usage: newf <path>
+# Creates a new file.
+function newf() {
   for path in "$@"; do
     if [[ -f "$path" ]]; then
       echo "warning: file '${path}' already exists"
@@ -21,7 +25,13 @@ newf() {
   done
 }
 
-# Petar Marinov, http:/geocities.com/h2428, this is public domain
+# Usage:
+#   cd
+#   cd <dir>
+#   cd [(-|+)[N]]
+#   cd --
+# A better cd.
+# Author: Petar Marinov, http:/geocities.com/h2428, this is public domain
 function cd() {
 	local x2 the_new_dir adir index
 	local -i cnt
