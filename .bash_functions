@@ -22,8 +22,7 @@ newf() {
 }
 
 # Petar Marinov, http:/geocities.com/h2428, this is public domain
-alias cd=cd_func
-function cd_func() {
+function cd() {
 	local x2 the_new_dir adir index
 	local -i cnt
 
