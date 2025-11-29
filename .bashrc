@@ -9,7 +9,7 @@
 export PATH="$PATH:~/bin"
 
 #
-# Bash config
+# bash
 #
 
 # other files
@@ -26,29 +26,33 @@ shopt -s nocaseglob # enable case-insensitive filename globbing
 
 # prompts
 PROMPT_COMMAND='printf "\033]0;%s\007" "arch: ${PWD/#${HOME}/\~}"'
-PS1="$({ [ -n "$SSH_CLIENT" ] || [ -n "$SSH_TTY" ]; } && printf "\[\e[38;5;32m\]ssh\[\e[m\] ")"
-PS1+='[\[\e[38;5;7m\]\u\[\e[0m\]'
-PS1+='@\[\e[38;5;98m\]\H\[\e[0m\]'
-PS1+=' \[\e[38;5;3m\]\W\[\e[0m\]]$ '
+PS1='['
+[[ -n "$SSH_CLIENT" ]] || [[ -n "$SSH_TTY" ]]; && PS1+='\[\e[38;5;32m\]ssh\[\e[m\] '
+# PS1="$({ [ -n "$SSH_CLIENT" ] || [ -n "$SSH_TTY" ]; } && printf "\[\e[38;5;32m\]ssh\[\e[m\] ")"
+PS1+='\[\e[38;5;7m\]\u\[\e[m\]'
+PS1+='@\[\e[38;5;98m\]\H\[\e[m\]'
+PS1+=' \[\e[38;5;3m\]\W\[\e[m\]'
+PS1+=']$ '
 
 # history
 export HISTCONTROL="${HISTCONTROL}${HISTCONTROL+:}ignoredups:erasedups"
 unset HISTFILE
 
 #
-# Other
+# other
+# stuff
 #
 
 # ssh (ssh-agent)
 [ -z "$SSH_AUTH_SOCK" ] && eval "$(ssh-agent -s)" >/dev/null
 
-# rust/cargo
-[[ -f "${HOME}/.cargo/env" ]] && source "${HOME}/.cargo/env"
-
 # using wsl-open as browser
 if [[ $(uname -r) =~ (m|M)icrosoft ]]; then
-	[[ -z $BROWSER ]] && { export BROWSER=wsl-open || export BROWSER=$BROWSER:wsl-open; }
+  [[ -z $BROWSER ]] && { export BROWSER=wsl-open || export BROWSER=$BROWSER:wsl-open; }
 fi
+
+# rust / cargo
+[[ -f "${HOME}/.cargo/env" ]] && source "${HOME}/.cargo/env"
 
 # dotnet
 export DOTNET_ROOT=$HOME/.dotnet
