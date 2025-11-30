@@ -1,34 +1,37 @@
 #!/usr/bin/env bash
 
-SCRIPTNAME="$(basename "$0")"
-
 print-help() {
   echo "Usage: $SCRIPTNAME [-l <lang>] [-m <filename>] [-c <compiler>] <dir>"
   echo
-  echo "Options:"
-  echo "  -l, --language    specifies the language of the project. common values are 'c' and 'cpp'. default is 'c'."
-  echo "  -m, --main-file   sets the name of the main file (without an extension). default is 'main'."
-  echo "  -c, --compiler    specifies the compiler for the project. default for C is 'gcc', C++ is 'g++'"
-  echo "      --help        display this help and exit"
+  echo "  -l, --language=<lang>       specifies the language of the project. common values are 'c', 'cpp', 'py', and 'java'. default is 'c'."
+  echo "  -m, --main-file=<filename>  sets the name of the main file (without the extension). default is 'main'."
+  echo "  -c, --compiler=<compiler>   specifies the compiler for the project. default for C is 'gcc', C++ is 'g++', Python is 'python3'."
+  echo "      --help  display this help and exit"
+  echo
+  echo "Exit Codes:"
+  echo "  0  if project was generated successfully, or"
+  echo "  1  if there was an error."
 }
 
 print-see-help() {
   echo "See '${SCRIPTNAME} --help' for help"
 }
 
-shopt -s nocaseglob
-
 get-language() {
   if [[ $# -ne 1 ]]; then
-    echo "${SCRIPTNAME}: incorrect number of arguments" >&2
+    echo "${FUNCNAME[0]}: incorrect number of arguments" >&2
     return 1
   fi
 
   local lang="$1"
   if [[ "$lang" == 'c' ]]; then
     echo "$LANG_C"
-  elif [[ "$lang" == +('cpp'|'cxx'|'cc') ]]; then
+  elif [[ "$lang" == +('cpp'|'c++'|'cxx') ]]; then
     echo "$LANG_CXX"
+  elif [[ "$lang" == +('py'|'python'|"python3") ]]; then
+    echo "$LANG_PYTHON"
+  elif [[ "$lang" == "java" ]]; then
+    echo "$LANG_JAVA"
   else
     echo "${SCRIPTNAME}: unknown language '$lang'" >&2
     return 1
@@ -39,7 +42,7 @@ get-language() {
 
 get-compiler() {
   if [[ $# -ne 1 ]]; then
-    echo "${SCRIPTNAME}: incorrect number of arguments" >&2
+    echo "${FUNCNAME[0]}: incorrect number of arguments" >&2
     return 1
   fi
 
@@ -62,6 +65,20 @@ get-compiler() {
       echo "${SCRIPTNAME}: unknown C++ compiler '$compiler'" >&2
       return 1
     fi
+  elif [[ $OPT_LANGUAGE == "$LANG_PYTHON" ]]; then
+    if [[ "$compiler" == +('python3'|'python') ]]; then
+      echo "$COMPILER_PYTHON"
+    else
+      echo "${SCRIPTNAME}: unknown Python interpeter '$compiler'" >&2
+      return 1
+    fi
+  elif [[ $OPT_LANGUAGE == "$LANG_JAVA" ]]; then
+    if [[ "$compiler" == "javac" ]]; then
+      echo "$COMPILER_JAVAC"
+    else
+      echo "${SCRIPTNAME}: unknown Java compiler '$compiler'" >&2
+      return 1
+    fi
   else
     return 1
   fi
@@ -71,7 +88,7 @@ get-compiler() {
 
 get-file-extension() {
   if [[ $# -ne 1 ]]; then
-    echo "${SCRIPTNAME}: incorrect number of arguments" >&2
+    echo "${FUNCNAME[0]}: incorrect number of arguments" >&2
     return 1
   fi
 
@@ -80,6 +97,10 @@ get-file-extension() {
     echo 'c'
   elif [[ "$lang" == "$LANG_CXX" ]]; then
     echo 'cpp'
+  elif [[ "$lang" == "$LANG_PYTHON" ]]; then
+    echo 'py'
+  elif [[ "$lang" == "$LANG_JAVA" ]]; then
+    echo 'java'
   else
     echo "${SCRIPTNAME}: unknown language '$lang'" >&2
     return 1
@@ -88,21 +109,55 @@ get-file-extension() {
   return 0
 }
 
+get-build-script-name() {
+  if [[ $# -ne 1 ]]; then
+    echo "${FUNCNAME[0]}: incorrect number of arguments" >&2
+    return 1
+  fi
+
+  local lang="$1"
+  if [[ "$lang" == +("$LANG_C"|"$LANG_CXX"|"$LANG_JAVA") ]]; then
+    echo 'build.sh'
+  elif [[ "$lang" == "$LANG_PYTHON" ]]; then
+    echo 'run.sh'
+  elif [[ "$lang" == "$LANG_JAVA" ]]; then
+    echo "run.sh"
+  else
+    echo "${SCRIPTNAME}: unknown language '$lang'" >&2
+    return 1
+  fi
+
+  return 0
+}
+
+# set shell options
+shopt -s nocaseglob
+
+SCRIPTNAME="$(basename "$0")"
+readonly SCRIPTNAME
+
 # C constants
-readonly LANG_C="LANG.C"
+readonly LANG_C='LANG.C'
 readonly COMPILER_GCC='gcc'
 readonly COMPILER_CLANG='clang'
-# C++ constants
-readonly LANG_CXX="LANG.CXX"
+# C++
+readonly LANG_CXX='LANG.CXX'
 readonly COMPILER_GXX='g++'
 readonly COMPILER_CLANGXX='clang++'
-
+# Python
+readonly LANG_PYTHON='LANG.PYTHON'
+readonly COMPILER_PYTHON='python3'
+# Java
+readonly LANG_JAVA='LANG.JAVA'
+readonly COMPILER_JAVAC='javac'
+readonly DEFAULT_MAIN_FILE_NAME_JAVA='Main'
+# Generic
 readonly DEFAULT_MAIN_FILE_NAME='main'
 
 declare ARG_DIRECTORY
-declare OPT_LANGUAGE="$LANG_C"
+declare OPT_LANGUAGE
 declare OPT_COMPILER
-declare OPT_MAIN_FILE="$DEFAULT_MAIN_FILE_NAME"
+declare OPT_MAIN_FILE
 
 if [[ $# -eq 0 ]]; then
   print-help
@@ -110,6 +165,7 @@ if [[ $# -eq 0 ]]; then
 fi
 
 if ! args=$(getopt -o 'l:,m:,c:' -l 'help,language:,main-file:,compiler:' -- "$@"); then
+  print-see-help
   exit 1
 fi
 
@@ -157,15 +213,6 @@ while [[ $# -gt 0 ]]; do
   shift
 done
 
-if [[ "$OPT_LANGUAGE" == "$LANG_C" ]]; then
-  OPT_COMPILER=${OPT_COMPILER:-"$COMPILER_GCC"}
-elif [[ "$OPT_LANGUAGE" == "$LANG_CXX" ]]; then
-  OPT_COMPILER=${OPT_COMPILER:-"$COMPILER_GXX"}
-else
-  # this control path should never be reached
-  exit 1
-fi
-
 if [[ "$#" -gt 1 ]]; then
   echo "${SCRIPTNAME}: too many arguments" >&2
   print-see-help >&2
@@ -177,9 +224,29 @@ elif [[ "$#" -lt 1 ]]; then
 fi
 
 ARG_DIRECTORY="$1"
+OPT_LANGUAGE="${OPT_LANGUAGE:-${LANG_C}}"
+if [[ "$OPT_LANGUAGE" == "$LANG_JAVA" ]]; then
+  OPT_MAIN_FILE="${OPT_MAIN_FILE:-${DEFAULT_MAIN_FILE_NAME_JAVA}}"
+else
+  OPT_MAIN_FILE="${OPT_MAIN_FILE:-${DEFAULT_MAIN_FILE_NAME}}"
+fi
+
+if [[ "$OPT_LANGUAGE" == "$LANG_C" ]]; then
+  OPT_COMPILER=${OPT_COMPILER:-"$COMPILER_GCC"}
+elif [[ "$OPT_LANGUAGE" == "$LANG_CXX" ]]; then
+  OPT_COMPILER=${OPT_COMPILER:-"$COMPILER_GXX"}
+elif [[ "$OPT_LANGUAGE" == "$LANG_PYTHON" ]]; then
+  OPT_COMPILER=${OPT_COMPILER:-"$COMPILER_PYTHON"}
+elif [[ "$OPT_LANGUAGE" == "$LANG_JAVA" ]]; then
+  OPT_COMPILER=${OPT_COMPILER:-"$COMPILER_JAVAC"}
+else
+  # this control path should never be reached
+  exit 1
+fi
+
 MAIN_FILE_NAME="${OPT_MAIN_FILE}.$(get-file-extension "$OPT_LANGUAGE")"
 MAIN_FILE_PATH="${ARG_DIRECTORY}/${MAIN_FILE_NAME}"
-BUILD_SCRIPT_PATH="${ARG_DIRECTORY}/build.sh"
+BUILD_SCRIPT_PATH="${ARG_DIRECTORY}/$(get-build-script-name "$OPT_LANGUAGE")"
 
 declare -i FAILED=1
 
@@ -202,28 +269,44 @@ fi
 mkdir -p "$ARG_DIRECTORY"
 # create main file
 touch "$MAIN_FILE_PATH"
-if [[ "$OPT_LANGUAGE" == +("$LANG_C"|"$LANG_CXX") ]]; then
-  if [[ "$OPT_LANGUAGE" == "$LANG_C" ]]; then
-    echo -e '#include <stdio.h>\n' >>"$MAIN_FILE_PATH"
-  elif [[ "$OPT_LANGUAGE" == "$LANG_CXX" ]]; then
-    echo -e '#include <iostream>\n' >>"$MAIN_FILE_PATH"
+(
+  if [[ "$OPT_LANGUAGE" == +("$LANG_C"|"$LANG_CXX") ]]; then
+    if [[ "$OPT_LANGUAGE" == "$LANG_C" ]]; then
+      echo -e '#include <stdio.h>\n'
+    elif [[ "$OPT_LANGUAGE" == "$LANG_CXX" ]]; then
+      echo -e '#include <iostream>\n'
+    fi
+
+    echo -e "int main(int argc, char* argv[]) {"
+
+    if [[ "$OPT_LANGUAGE" == "$LANG_C" ]]; then
+      echo -e '\tprintf("Hello World!\\n");'
+    elif [[ "$OPT_LANGUAGE" == "$LANG_CXX" ]]; then
+      echo -e '\tstd::cout << "Hello World!\\n";'
+    fi
+
+    echo "}"
+  elif [[ "$OPT_LANGUAGE" == "$LANG_PYTHON" ]]; then
+    echo -e "if __name__ == '__main__':\n\tprint('Hello World!')"
+  elif [[ "$OPT_LANGUAGE" == "$LANG_JAVA" ]]; then
+    echo -e "public class ${OPT_MAIN_FILE} {"
+    echo -e "\tpublic static void main(String[] args) {"
+    echo -e "\t\tSystem.out.println(\"Hello World!\");"
+    echo -e "\t}"
+    echo -e "}"
   fi
-
-  echo -e "int main(int argc, char* argv[]) {" >>"$MAIN_FILE_PATH"
-
-  if [[ "$OPT_LANGUAGE" == "$LANG_C" ]]; then
-    echo -e '\tprintf("Hello World!\\n");' >>"$MAIN_FILE_PATH"
-  elif [[ "$OPT_LANGUAGE" == "$LANG_CXX" ]]; then
-    echo -e '\tstd::cout << "Hello World!\\n";' >>"$MAIN_FILE_PATH"
-  fi
-
-  echo "}" >>"$MAIN_FILE_PATH"
-fi
-
+) >>"$MAIN_FILE_PATH"
 # create build script
 touch "$BUILD_SCRIPT_PATH"
 chmod +x "$BUILD_SCRIPT_PATH"
-echo -e "#!/usr/bin/env bash\n$BUILD_COMMAND" >>"$BUILD_SCRIPT_PATH"
-if [[ "$OPT_COMPILER" == +("$COMPILER_GCC"|"$COMPILER_GXX"|"$COMPILER_CLANG"|"$COMPILER_CLANGXX") ]]; then
-  echo "${OPT_COMPILER} -o ${MAIN_FILE_NAME%.*} ${MAIN_FILE_NAME}" >>"$BUILD_SCRIPT_PATH"
-fi
+(
+  echo -e "#!/usr/bin/env bash\n"
+  if [[ "$OPT_COMPILER" == +("$COMPILER_GCC"|"$COMPILER_GXX"|"$COMPILER_CLANG"|"$COMPILER_CLANGXX") ]]; then
+    echo "${OPT_COMPILER} -o ${MAIN_FILE_NAME%.*} ${MAIN_FILE_NAME}"
+  elif [[ "$OPT_LANGUAGE" == "$LANG_PYTHON" ]]; then
+    echo "${OPT_COMPILER} ${MAIN_FILE_NAME}"
+  elif [[ "$OPT_LANGUAGE" == "$LANG_JAVA" ]]; then
+    echo "mkdir -p bin"
+    echo "${OPT_COMPILER} -d bin ${MAIN_FILE_NAME}"
+  fi
+) >>"$BUILD_SCRIPT_PATH"

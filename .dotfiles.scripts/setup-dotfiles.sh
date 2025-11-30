@@ -13,11 +13,20 @@ elif [[ -n "$input" && "$input" != 'y' && "$input" != 'Y' ]]; then
   exit 1
 fi
 
-find ./.dotfiles/ ! -wholename '*/.git/*' ! -wholename '*/.dotfiles.scripts/*' -type f -exec cp -f {} ~ \;
+declare -a files
+readarray -d '' files < <(find ./.dotfiles/ ! -wholename '*/.git/*' ! -wholename '*/.dotfiles.scripts/*' -type f -print0)
 
-if [[ $? != 0 ]]; then
-    "error: failed to create/write dotfiles"
-    exit 1
-fi
+declare parent
+for file in "${files[@]}"; do
+    parent="$(basename "$(dirname "$file")")"
+    
+    if [[ "$parent" == 'bin' ]]; then
+	chmod +x "$file"
+    fi
+done
+
+for file in "${files[@]}"; do
+    cp -f "$file" . 
+done
 
 echo "successfully created/wrote dotfiles"
