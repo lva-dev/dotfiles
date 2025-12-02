@@ -3,7 +3,7 @@
 echo "running this command will overwrite your existing dotfiles."
 echo -n "are you sure you want to do this? (y/N): "
 
-declare input
+input=
 read input
 
 if [[ "$input" == 'n' || "$input" == 'N' ]]; then
@@ -13,7 +13,7 @@ elif [[ -n "$input" && "$input" != 'y' && "$input" != 'Y' ]]; then
 	exit 1
 fi
 
-declare files=()
+files=()
 readarray -d '' files < <(find ./.dotfiles/ ! -wholename '*/.git/*' ! -wholename '*/.dotfiles.scripts/*' -type f -print0)
 
 for file in "${files[@]}"; do
@@ -28,9 +28,9 @@ for file in "${files[@]}"; do
   parent="$(dirname "$file")"
   mkdir -p "$parent"
   real="$(realpath "$file")"
-	relative="./${real#"$HOME/.dotfiles/"}"
+  relative="./${real#"$HOME/.dotfiles/"}"
   echo "copying '$relative'..."
-	cp -f "$file" "$relative" 
+  cp -f "$file" "$relative" 
 done
 
 echo "successfully created/wrote dotfiles"
