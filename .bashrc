@@ -6,7 +6,7 @@
 [[ "$-" != *i* ]] && return
 
 # PATH
-export PATH="$PATH:~/bin"
+export PATH="~/bin:$PATH"
 
 #
 # bash
