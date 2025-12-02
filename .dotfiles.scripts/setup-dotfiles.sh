@@ -7,26 +7,30 @@ declare input
 read input
 
 if [[ "$input" == 'n' || "$input" == 'N' ]]; then
-  exit 0
+	exit 0
 elif [[ -n "$input" && "$input" != 'y' && "$input" != 'Y' ]]; then
-  echo "error: invalid input. will not overwrite existing dotfiles." >&2
-  exit 1
+	echo "error: invalid input. will not overwrite existing dotfiles." >&2
+	exit 1
 fi
 
-declare -a files
+declare files=()
 readarray -d '' files < <(find ./.dotfiles/ ! -wholename '*/.git/*' ! -wholename '*/.dotfiles.scripts/*' -type f -print0)
 
-declare parent
 for file in "${files[@]}"; do
-    parent="$(basename "$(dirname "$file")")"
-    
-    if [[ "$parent" == 'bin' ]]; then
-	chmod +x "$file"
-    fi
+	parent="$(basename "$(dirname "$file")")"
+
+	if [[ "$parent" == 'bin' ]]; then
+		chmod +x "$file"
+	fi
 done
 
 for file in "${files[@]}"; do
-    cp -f "$file" . 
+  parent="$(dirname "$file")"
+  mkdir -p "$parent"
+  real="$(realpath "$file")"
+	relative="./${real#"$HOME/.dotfiles/"}"
+  echo "copying '$relative'..."
+	cp -f "$file" "$relative" 
 done
 
 echo "successfully created/wrote dotfiles"
