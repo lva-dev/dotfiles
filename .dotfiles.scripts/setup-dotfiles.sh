@@ -16,6 +16,8 @@ fi
 files=()
 readarray -d '' files < <(find ./.dotfiles/ ! -wholename '*/.git/*' ! -wholename '*/.dotfiles.scripts/*' -type f -print0)
 
+mkdir -p bin
+
 for file in "${files[@]}"; do
 	parent="$(basename "$(dirname "$file")")"
 
