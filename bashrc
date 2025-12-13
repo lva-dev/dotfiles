@@ -46,8 +46,8 @@ unset HISTFILE
 #
 
 # ssh (ssh-agent)
-if [[ -z "$SSH_AUTH_SOCK" ]]; then
-	eval "$(ssh-agent -s)" >/dev/null
+if command -v ssh-agent && [[ -z "$SSH_AUTH_SOCK" ]]; then
+  eval "$(ssh-agent -s)" >/dev/null
 fi
 
 # using wsl-open as browser
