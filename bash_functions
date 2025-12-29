@@ -5,9 +5,7 @@
 # Usage: path
 # Prints the paths in PATH, split by newlines.
 function path() {
-	while IFS= read -r path; do
-		echo "$path"
-	done <<<"$PATH"
+  echo "$PATH" | tr ':' '\n'
 }
 
 # Usage: newf <path>

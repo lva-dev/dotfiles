@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-DRY_RUN=
+DRY_RUN=y
 
 function confirm-overwrite() {
   if [[ -n $DRY_RUN ]]; then
@@ -32,13 +32,13 @@ DOTFILES=(
   profile
 )
 
-LINUX_BINARIES=(
-  bin/gen-project  
+LINUX_USER_BINARIES=(
+  local/bin/gen-project  
 )
 
-WSL_BINARIES=(
-  bin/code
-  bin/explorer
+WSL_SYSTEM_BINARIES=(
+  usr/local/bin/code
+  usr/local/bin/explorer
 )
 
 INPUT_DIRECTORY="$(dirname "$(dirname "${BASH_SOURCE[0]}")")"
@@ -49,8 +49,9 @@ function make-directories {
     return 0
   fi
 
-  if [[ "${#LINUX_BINARIES}" -gt 0 || "${#WSL_BINARIES}" -gt 0 ]]; then
-    mkdir -p "$OUTPUT_DIRECTORY/bin"
+  if [[ "${#LINUX_USER_BINARIES}" -gt 0 || "${#WSL_SYSTEM_BINARIES}" -gt 0 ]]; then
+    mkdir -p "$OUTPUT_DIRECTORY/.local"
+    mkdir -p "$OUTPUT_DIRECTORY/.local/bin"
   fi
 }
 
@@ -67,7 +68,34 @@ function hide-file() {
 }
 
 function get-relative-to-input-dir() {
-  realpath --relative-to="$(dirname "$1")" "$INPUT_DIRECTORY"
+  if [[ "${1:0:1}" == '/' ]]; then
+    dirname "$1"
+  else
+    realpath -m --relative-to="$(dirname "$1")" "$INPUT_DIRECTORY"
+  fi
+}
+
+function is-subfile() {
+  local dir
+  local file
+  local relative
+  dir="$(realpath -m "$1")"
+  file="$(realpath -m "$2")"
+  relative="${file#"$dir"}"
+  if [[ "$relative" == "$file" ]]; then
+    return 1
+  else
+    return 0
+  fi
+}
+
+function is-abs() {
+  [[ "${1:0:1}" == '/' ]]
+}
+
+function is-hidden() {
+  local without_root_slash="${1#/}"
+  [[ "${without_root_slash:0:1}" == '.' ]]
 }
 
 function symlink-file() {
@@ -75,15 +103,21 @@ function symlink-file() {
   local in_relative_directory
   local in_file
   local out_file
-
-  in_filename="$1"
-  in_relative_directory="$(get-relative-to-input-dir "$in_filename")"
-  in_file="$in_relative_directory/$in_filename"
   
-  out_file="$OUTPUT_DIRECTORY/$1"
-  [[ $2 == '-h' ]] && out_file="$(hide-file "$out_file")"
+  if is-abs "$2"; then
+    in_file="$(realpath -m "$INPUT_DIRECTORY/$1")"
+    out_file="$2"
+  else
+    in_filename="$(basename "$1")"
+    in_relative_directory="$(get-relative-to-input-dir "$1")"
+    in_file="$in_relative_directory/$in_filename"
+    out_file="$OUTPUT_DIRECTORY/$2"
+  fi
 
-  echo -n " linking $(hide-file "$1")"
+  echo -n " linking "
+  is-hidden "$2" && echo -n ".$1"
+  is-abs "$2" && echo -n "/$1"
+  
   if [[ -n $DRY_RUN ]]; then
     echo -n " ('$in_file' -> '$out_file')... "
   else
@@ -96,7 +130,7 @@ function symlink-file() {
 
 function symlink-dotfiles() {
   for file in "${DOTFILES[@]}"; do
-    symlink-file "$file" -h
+    symlink-file "$file" ".$file"
   done
 }
 
@@ -105,13 +139,13 @@ if [[ $(uname -r) =~ (m|M)icrosoft ]]; then
 fi
 
 function symlink-binaries() {  
-  for file in "${LINUX_BINARIES[@]}"; do
-    symlink-file "$file"
+  for file in "${LINUX_USER_BINARIES[@]}"; do
+    symlink-file "$file" ".$file"
   done
 
   if [[ -n $WSL ]]; then
-    for file in "${WSL_BINARIES[@]}"; do
-      symlink-file "$file"
+    for file in "${WSL_SYSTEM_BINARIES[@]}"; do
+      symlink-file "$file" "/$file"
     done
   fi
 }

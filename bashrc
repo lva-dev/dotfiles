@@ -6,7 +6,7 @@
 [[ "$-" != *i* ]] && return
 
 # PATH
-export PATH="~/bin:$PATH"
+export PATH="${HOME}/.local/bin:${HOME}/bin:$PATH"
 
 #
 # bash
@@ -30,7 +30,6 @@ PS1='['
 if [[ -n "$SSH_CLIENT" ]] || [[ -n "$SSH_TTY" ]]; then
 	PS1+='\[\e[38;5;32m\]ssh\[\e[m\] '
 fi
-# PS1="$({ [ -n "$SSH_CLIENT" ] || [ -n "$SSH_TTY" ]; } && printf "\[\e[38;5;32m\]ssh\[\e[m\] ")"
 PS1+='\[\e[38;5;7m\]\u\[\e[m\]'
 PS1+='@\[\e[38;5;98m\]\H\[\e[m\]'
 PS1+=' \[\e[38;5;3m\]\W\[\e[m\]'
@@ -46,7 +45,7 @@ unset HISTFILE
 #
 
 # ssh (ssh-agent)
-if command -v ssh-agent && [[ -z "$SSH_AUTH_SOCK" ]]; then
+if command -v ssh-agent >/dev/null && [[ -z "$SSH_AUTH_SOCK" ]]; then
   eval "$(ssh-agent -s)" >/dev/null
 fi
 

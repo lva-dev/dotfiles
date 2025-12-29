@@ -1,0 +1,51 @@
+#!/usr/bin/env bash
+
+function error() {
+	echo -e "\e[31merror:\e[m failed to open vscode: $*" >&2
+}
+
+function command-prompt() {
+  '/mnt/c/Windows/System32/cmd.exe' "$@"
+}
+
+function command-exists-win() {
+  local windows_path
+  windows_path="$(cd /mnt/c/Windows && command-prompt /c 'echo %PATH%')"
+  local path
+  while IFS= read -r -d ';' dir; do
+    path="$(wslpath -u "$dir")/$1"
+    if [[ -f $path ]]; then
+      echo "$path"
+      return 0
+    fi
+  done <<< "$windows_path"
+  
+  return 1
+}
+
+function find-vscode() {
+  if [[ $(uname -r) =~ (m|M)icrosoft ]]; then
+    local code='/mnt/c/Program Files/Microsoft VS Code/bin/code'
+    if [[ -f $code ]]; then
+      echo "$code"
+      return 0
+    else
+      command-exists-win code && return 0 || return 1
+    fi
+  else
+    command -v code && return 0 || return 1
+  fi
+}
+
+function main() {
+  local path
+  path="$(find-vscode)"
+  if ! [[ -f $path ]]; then
+    error "could not locate vscode startup script"
+    return 1
+  fi
+
+  "$path" "$@"
+}
+
+main "$@" &
