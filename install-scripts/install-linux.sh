@@ -1,9 +1,17 @@
 #!/usr/bin/env bash
 
-DRY_RUN=y
+DRY_RUN=n
+VERBOSE=n
+
+if [[ $(uname -r) =~ (m|M)icrosoft ]]; then
+  WSL=y
+fi
+
+INPUT_DIRECTORY="$(dirname "$(dirname "${BASH_SOURCE[0]}")")"
+OUTPUT_DIRECTORY="$PWD"
 
 function confirm-overwrite() {
-  if [[ -n $DRY_RUN ]]; then
+  if [[ $DRY_RUN == 'y' ]]; then
     return 0
   fi
   
@@ -20,37 +28,12 @@ function confirm-overwrite() {
   fi
 }
 
-DOTFILES=(
-  bash_aliases
-  bash_functions
-  bash_logout
-  bash_profile
-  bashrc
-  dircolors
-  gdbinit
-  inputrc
-  profile
-)
-
-LINUX_USER_BINARIES=(
-  local/bin/gen-project  
-)
-
-WSL_SYSTEM_BINARIES=(
-  usr/local/bin/code
-  usr/local/bin/explorer
-)
-
-INPUT_DIRECTORY="$(dirname "$(dirname "${BASH_SOURCE[0]}")")"
-OUTPUT_DIRECTORY="$PWD"
-
 function make-directories {
   if [[ -n $DRY_RUN ]]; then
     return 0
   fi
 
-  if [[ "${#LINUX_USER_BINARIES}" -gt 0 || "${#WSL_SYSTEM_BINARIES}" -gt 0 ]]; then
-    mkdir -p "$OUTPUT_DIRECTORY/.local"
+  if [[ "${#LINUX_USER_BINARIES}" -gt 0 ]]; then
     mkdir -p "$OUTPUT_DIRECTORY/.local/bin"
   fi
 }
@@ -105,7 +88,7 @@ function symlink-file() {
   local out_file
   
   if is-abs "$2"; then
-    in_file="$(realpath -m "$INPUT_DIRECTORY/$1")"
+    in_file="$(realpath -m "$1")"
     out_file="$2"
   else
     in_filename="$(basename "$1")"
@@ -116,46 +99,101 @@ function symlink-file() {
 
   echo -n " linking "
   is-hidden "$2" && echo -n ".$1"
-  is-abs "$2" && echo -n "/$1"
+  is-abs "$2" && echo -n "$2"
   
-  if [[ -n $DRY_RUN ]]; then
+  if [[ $VERBOSE == 'y' ]]; then
     echo -n " ('$in_file' -> '$out_file')... "
   else
     echo -n '... '
-    ln -sf "$in_file" "$out_file"
   fi
+
+  local ln_errc=0
+  if [[ $DRY_RUN == 'n' ]]; then
+    ln -sf "$in_file" "$out_file" &>/dev/null 
+    ln_errc=$?
+  fi
+
+  if [[ $ln_errc == 0 ]]; then
+    echo "done"
+    return 0
+  else
+    echo "failed to link file"
+    return 1
+  fi
+}
+
+function clparse() {
+  local opts
+  if ! opts=$(getopt -n "$(basename "$0")" -o 'vh' -l 'dry-run,verbose,help' -- "$@"); then
+    exit 1
+  fi
+
+  set -- $opts
+
+  while [[ $# -gt 0 ]]; do
+    case $1 in
+      -h|--help)
+        echo "Usage: $(basename "$0") [-h|--help] [-v|--verbose] [--dry-run]"
+        echo
+        echo "Options:"
+        echo "      --dry-run   Don't link any files"
+        echo "  -v, --verbose   Use verbose output"
+        echo "  -h, --help      Print help" 
+        exit 0
+        ;;
+      -v|--verbose)
+        VERBOSE=y
+        ;;
+      --dry-run)
+        DRY_RUN=y
+        ;;
+      --)
+        shift
+        break
+        ;;
+      -*)
+        echo "error: unknown option '$1'" >&2
+        exit 1
+        ;;
+      *)
+        break
+        ;;
+    esac
+    shift
+  done
+}
+
+function main() {
+  clparse "$@"
   
-  echo "done"
-}
+  if confirm-overwrite; then
+    echo "Symlinking dotfiles..."
+    make-directories
 
-function symlink-dotfiles() {
-  for file in "${DOTFILES[@]}"; do
-    symlink-file "$file" ".$file"
-  done
-}
+    # ~/dotfiles
+    symlink-file 'bash_aliases' '.bash_aliases'
+    symlink-file 'bash_functions' '.bash_functions'
+    symlink-file 'bash_logout' '.bash_logout'
+    symlink-file 'bash_profile' '.bash_profile'
+    symlink-file 'bashrc' '.bashrc'
+    symlink-file 'dircolors' '.dircolors'
+    symlink-file 'gdbinit' '.gdbinit'
+    symlink-file 'inputrc' '.inputrc'
+    symlink-file 'profile' '.profile'
 
-if [[ $(uname -r) =~ (m|M)icrosoft ]]; then
-  WSL=y
-fi
+    # ~/.local/bin/
+    symlink-file 'localbin/gen-project' '.local/bin/gen-project'
 
-function symlink-binaries() {  
-  for file in "${LINUX_USER_BINARIES[@]}"; do
-    symlink-file "$file" ".$file"
-  done
-
-  if [[ -n $WSL ]]; then
-    for file in "${WSL_SYSTEM_BINARIES[@]}"; do
-      symlink-file "$file" "/$file"
-    done
+    # /usr/local/bin/
+    if [[ -n $WSL ]]; then
+      symlink-file "$INPUT_DIRECTORY/sysbin/code" '/usr/local/bin/code'
+      symlink-file "$INPUT_DIRECTORY/sysbin/explorer" '/usr/local/bin/explorer'
+    fi
+    
+    echo "Successfully linked dotfiles"
+  else
+    exit 1
   fi
 }
 
-if confirm-overwrite; then
-  echo "Symlinking dotfiles..."
-  make-directories
-  symlink-dotfiles
-  symlink-binaries
-  echo "Successfully linked dotfiles"
-else
-  exit 1
-fi
+main "$@"
