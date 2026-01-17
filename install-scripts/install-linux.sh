@@ -179,7 +179,6 @@ function main() {
     symlink-file 'dircolors' '.dircolors'
     symlink-file 'gdbinit' '.gdbinit'
     symlink-file 'inputrc' '.inputrc'
-    symlink-file 'profile' '.profile'
 
     # ~/.local/bin/
     symlink-file 'localbin/gen-project' '.local/bin/gen-project'
