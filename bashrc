@@ -6,7 +6,7 @@
 [[ "$-" != *i* ]] && return
 
 # PATH
-export PATH="${HOME}/.local/bin:${HOME}/bin:$PATH"
+export PATH="${HOME}/.local/bin:$PATH"
 
 #
 # bash
@@ -26,6 +26,10 @@ shopt -s nocaseglob # enable case-insensitive filename globbing
 
 # prompts
 PROMPT_COMMAND='printf "\033]0;%s\007" "arch: ${PWD/#$HOME/\~}"'
+if wslinfo --networking-mode &>/dev/null; then
+  PROMPT_COMMAND=${PROMPT_COMMAND:+"$PROMPT_COMMAND ; "}'printf "\e]9;9;%s\e\\" "$(wslpath -w "$PWD")"'
+fi
+
 PS1='['
 if [[ -n "$SSH_CLIENT" ]] || [[ -n "$SSH_TTY" ]]; then
 	PS1+='\[\e[38;5;32m\]ssh\[\e[m\] '
@@ -50,7 +54,7 @@ if command -v ssh-agent >/dev/null && [[ -z "$SSH_AUTH_SOCK" ]]; then
 fi
 
 # using wsl-open as browser
-if [[ $(uname -r) =~ (m|M)icrosoft ]]; then
+if wslinfo --networking-mode &>/dev/null; then
 	[[ -z $BROWSER ]] && { export BROWSER=wsl-open || export BROWSER=$BROWSER:wsl-open; }
 fi
 
@@ -58,5 +62,7 @@ fi
 [[ -f "$HOME/.cargo/env" ]] && source "$HOME/.cargo/env"
 
 # dotnet
-export DOTNET_ROOT=$HOME/.dotnet
-export PATH=$PATH:$DOTNET_ROOT:$DOTNET_ROOT/tools
+if [[ -d "$HOME/.dotnet" ]]; then
+  export DOTNET_ROOT=$HOME/.dotnet
+  export PATH=$PATH:$DOTNET_ROOT:$DOTNET_ROOT/tools
+fi

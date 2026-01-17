@@ -30,7 +30,7 @@ alias restart='tput clear; exec bash -l'
 # Other commands
 #
 
-command -v open >/dev/null && alias open='xdg-open'
+command -v xdg-open >/dev/null && alias open='xdg-open'
 command -v trash >/dev/null && alias rm='echo "\"rm\" has been disabled. Use \"trash\" instead." >&2'
 command -v clang >/dev/null && alias cc='clang'
 command -v xclip >/dev/null && alias clip='xclip -selection clipboard'
