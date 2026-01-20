@@ -27,7 +27,7 @@ shopt -s nocaseglob # enable case-insensitive filename globbing
 # prompts
 PROMPT_COMMAND='printf "\033]0;%s\007" "arch: ${PWD/#$HOME/\~}"'
 if wslinfo --networking-mode &>/dev/null; then
-  PROMPT_COMMAND=${PROMPT_COMMAND:+"$PROMPT_COMMAND ; "}'printf "\e]9;9;%s\e\\" "$(wslpath -w "$PWD")"'
+  PROMPT_COMMAND=${PROMPT_COMMAND:+"$PROMPT_COMMAND;"}'printf "\e]9;9;%s\e\\" "$(wslpath -w "$PWD")"'
 fi
 
 PS1='['
@@ -65,4 +65,9 @@ fi
 if [[ -d "$HOME/.dotnet" ]]; then
   export DOTNET_ROOT=$HOME/.dotnet
   export PATH=$PATH:$DOTNET_ROOT:$DOTNET_ROOT/tools
+fi
+
+# zoxide
+if command -v zoxide > /dev/null; then
+  eval "$(zoxide init bash)"
 fi
