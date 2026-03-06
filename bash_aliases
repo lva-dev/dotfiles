@@ -30,11 +30,7 @@ alias restart='tput clear; exec bash -l'
 # Other commands
 #
 
-command -v xdg-open >/dev/null && alias open='xdg-open'
-command -v trash >/dev/null && alias rm='echo "\"rm\" has been disabled. Use \"trash\" instead." >&2'
-command -v clang >/dev/null && alias cc='clang'
-command -v xclip >/dev/null && alias clip='xclip -selection clipboard'
-command -v fzf >/dev/null && alias fzf-history='history | cut -c 8- | fzf'
-command -v google-chrome >/dev/null && alias google-chrome='google-chrome --profile-directory=Default'
-command -v gdb >/dev/null && alias gdb='gdb -q'
 command -v emacs >/dev/null && alias emacs='emacs -nw'
+command -v gdb >/dev/null && alias gdb='gdb -q'
+command -v google-chrome >/dev/null && alias google-chrome='google-chrome --profile-directory=Default'
+command -v xclip >/dev/null && alias clip='xclip -selection clipboard'

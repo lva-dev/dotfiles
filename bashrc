@@ -48,6 +48,10 @@ unset HISTFILE
 # stuff
 #
 
+if command -v code >/dev/null; then
+  export EDITOR=code
+fi
+
 # ssh (ssh-agent)
 if command -v ssh-agent >/dev/null && [[ -z "$SSH_AUTH_SOCK" ]]; then
   eval "$(ssh-agent -s)" >/dev/null
@@ -69,5 +73,10 @@ fi
 
 # zoxide
 if command -v zoxide > /dev/null; then
-  eval "$(zoxide init bash)"
+  eval "$(zoxide init --cmd cd bash)"
+fi
+
+# vs code
+if ((VSCODE_INJECTION == 1)); then
+    export EDITOR="code --wait"
 fi

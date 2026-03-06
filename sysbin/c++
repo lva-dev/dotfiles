@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+
+if ! command -v clang++ >/dev/null; then
+  echo -e "\e[31merror:\e[39m cannot find 'clang++'" >&2
+  echo -e "  \e[33mnote\e[39m: Make sure it is installed and can be found through your PATH" >&2 
+  exit 1
+fi
+
+clang++ "$@"
