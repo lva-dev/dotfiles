@@ -47,9 +47,9 @@ function main() {
     printf "%s\n" $unmerged_files  Ensure newlines are printed
   else
     if ((force)); then
-      stow
-    else
       stow . --adopt
+    else
+      stow .
     fi
   fi
 }
