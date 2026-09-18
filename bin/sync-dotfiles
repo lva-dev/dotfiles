@@ -11,7 +11,8 @@ function error() {
   echo -e "$THIS_FILE_BASENAME: \e[31merror\e[m: $1" >&2
 }
 
-cd "../$(dirname "$THIS_FILE_BASENAME")" || exit 2
+echo "$THIS_FILE_PATH"
+cd "$(dirname "$(dirname "$THIS_FILE_PATH")")" || exit 2
 
 status "stashing local dotfiles repository changes..."
 stash_result="$(git stash push -m "$THIS_FILE_BASENAME: Stash before syncing dotfiles")"
@@ -20,14 +21,14 @@ if [ "$stash_result" = "No local changes to save" ]; then
     needs_pop=0
 fi
 
-status "pulling changes from dotfiles repository...\n"
+status "pulling changes from dotfiles repository..."
 if ! git pull; then
   error "git failed to pull dotfiles from dotfiles repository"
   exit 1
 fi
 
 if [[ $needs_pop -eq 1 ]]; then
-    status "${BLUE}popping stashed changes...${NC}\n"
+    status "${BLUE}popping stashed changes...${NC}"
     git stash pop
 fi
 
