@@ -1,0 +1,21 @@
+[user]
+	name = leonva
+	email = leonv.allotey@gmail.com
+[credential]
+	helper = store
+[merge]
+	guitool = vscode
+[init]
+	defaultBranch = main
+[core]
+	editor = code
+[log]
+    decorate=auto
+    abbrevcommit=true
+[format]
+    pretty=oneline
+[alias]
+	c = commit
+	l = log
+	s = status
+	a = add

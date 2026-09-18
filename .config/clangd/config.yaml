@@ -1,0 +1,31 @@
+Completion:
+  ArgumentLists: OpenDelimiter
+
+CompileFlags:
+  Add: [-Wall, -Wextra, -pedantic]
+
+Diagnostics:
+  UnusedIncludes: None
+  Includes:
+    IgnoreHeader: ["/pch\\..*", "/Pch\\..*", "/PCH\\..*"]
+
+InlayHints:
+  DeducedTypes: false
+  Designators: false
+  ParameterNames: false
+  
+---
+If:
+  PathMatch: [.*\.cpp, .*\.hpp]
+CompileFlags:
+  Add: [-std=c++23]
+  Compiler: clang++
+---
+If:
+  PathMatch: [.*\.c]
+CompileFlags:
+  Add: [-std=c23]
+  Compiler: clang
+---
+If:
+  PathMatch: [.*/pch\.h]

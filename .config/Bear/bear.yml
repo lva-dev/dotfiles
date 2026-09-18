@@ -1,0 +1,12 @@
+schema: "4.2"
+
+compilers:
+compilers:
+  - path: /usr/bin/clang
+    as: clang
+  - path: /usr/bin/clang++
+    as: clang++
+  - path: /usr/bin/gcc
+    as: gcc
+  - path: /usr/bin/g++
+    as: g++
