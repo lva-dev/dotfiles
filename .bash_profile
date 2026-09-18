@@ -1,1 +1,5 @@
-.dotfiles/dot-bash_profile
+#
+# ~/.bash_profile
+#
+
+[[ -f "$HOME/.bashrc" ]] && source "$HOME/.bashrc"

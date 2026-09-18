@@ -1,1 +1,1 @@
-.dotfiles/dot-gdbinit
+set debuginfod enabled on
