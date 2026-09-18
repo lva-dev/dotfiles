@@ -11,31 +11,47 @@ function error() {
   echo -e "$THIS_FILE_BASENAME: \e[31merror\e[m: $1" >&2
 }
 
-echo "$THIS_FILE_PATH"
-cd "$(dirname "$(dirname "$THIS_FILE_PATH")")" || exit 2
+function main() {
+  local force=0
+  if (($# > 1)); then
+    error ""
+    exit 1
+  elif (($# == 1)) && [[ $1 == "--force" ]]; then
+    force=1
+  fi
 
-status "stashing local dotfiles repository changes..."
-stash_result="$(git stash push -m "$THIS_FILE_BASENAME: Stash before syncing dotfiles")"
-needs_pop=1
-if [ "$stash_result" = "No local changes to save" ]; then
-    needs_pop=0
-fi
+  echo "$THIS_FILE_PATH"
+  cd "$(dirname "$(dirname "$THIS_FILE_PATH")")" || exit 2
 
-status "pulling changes from dotfiles repository..."
-if ! git pull; then
-  error "git failed to pull dotfiles from dotfiles repository"
-  exit 1
-fi
+  status "stashing local dotfiles repository changes..."
+  stash_result="$(git stash push -m "$THIS_FILE_BASENAME: Stash before syncing dotfiles")"
+  needs_pop=1
+  if [ "$stash_result" = "No local changes to save" ]; then
+      needs_pop=0
+  fi
 
-if [[ $needs_pop -eq 1 ]]; then
-    status "${BLUE}popping stashed changes...${NC}"
-    git stash pop
-fi
+  status "pulling changes from dotfiles repository..."
+  if ! git pull; then
+    error "git failed to pull dotfiles from dotfiles repository"
+    exit 1
+  fi
 
-unmerged_files=$(git diff --name-only --diff-filter=U)
-if [[ ! -z $unmerged_files ]]; then
-   error "the following files have merge conflicts after popping the stash:"
-   printf "%s\n" $unmerged_files  Ensure newlines are printed
-else
-   stow .
-fi
+  if [[ $needs_pop -eq 1 ]]; then
+      status "${BLUE}popping stashed changes...${NC}"
+      git stash pop
+  fi
+
+  unmerged_files=$(git diff --name-only --diff-filter=U)
+  if [[ ! -z $unmerged_files ]]; then
+    error "the following files have merge conflicts after popping the stash:"
+    printf "%s\n" $unmerged_files  Ensure newlines are printed
+  else
+    if ((force)); then
+      stow
+    else
+      stow . --adopt
+    fi
+  fi
+}
+
+main "$@"
