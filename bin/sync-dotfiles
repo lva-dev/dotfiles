@@ -46,10 +46,11 @@ function main() {
     error "the following files have merge conflicts after popping the stash:"
     printf "%s\n" $unmerged_files  Ensure newlines are printed
   else
+    cd -
     if ((force)); then
       stow . --adopt
     else
-      stow .
+      stow 
     fi
   fi
 }
