@@ -48,9 +48,9 @@ function main() {
   else
     cd -
     if ((force)); then
-      stow . --adopt
+      stow .
     else
-      stow 
+      stow .
     fi
   fi
 }
