@@ -45,10 +45,6 @@
 	// Move autocompletion from tab to ctrl+space
 	"Tab": "IndentSelection|InsertTab",
 	"CtrlSpace": "Autocomplete",	
-
-	// Need init.lua for this action.
-	// editor.action.toggleWordWrap
-	"Alt-z": "lua:initlua.toggleSoftwrap",
 	
 	// The bindings from the next block are often overwritten by the terminal emulator itself.
 	// workbench.action.files.newUntitledFile
