@@ -18,7 +18,13 @@ alias du='du -h'
 #
 # Programs
 #
-command -v bat >/dev/null     && alias bat='bat -p'
+
+if command -v batcat >/dev/null && ! command -v bat >/dev/null; then
+  alias bat='batcat -p'
+else
+  command -v bat >/dev/null && alias bat='bat -p'
+fi
+
 command -v clang++ >/dev/null && alias clang++='clang++ -std=c++23'
 command -v code >/dev/null    && alias c='code'
 command -v emacs >/dev/null   && alias emacs='emacs -nw'
