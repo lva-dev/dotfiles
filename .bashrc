@@ -8,7 +8,7 @@
 # PATH
 
 if [[ ! "$PATH" =~ (^|:)"${HOME}/.local/bin"(:|$) ]]; then
-	PATH="$PATH:${HOME}/.local/bin"
+	PATH="${HOME}/.local/bin:$PATH"
 fi
 
 #
