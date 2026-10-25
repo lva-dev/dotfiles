@@ -70,7 +70,7 @@ PS1="$(
 # man/bat
 if command -v bat >/dev/null && command -v batman >/dev/null; then
 	eval "$(batman --export-env)"
-	export MANPAGER="sh -c 'col -bx | bat -l man -p'"
+	export MANPAGER="sh -c 'col -bx | bat -l man -p --paging=always'"
 fi
 
 # fzf
