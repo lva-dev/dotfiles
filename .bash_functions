@@ -56,8 +56,7 @@ function list-path() {
 }
 
 if command -v fzf >/dev/null; then
-  . 'scripts/fzf-history.sh'
-
+  . "$HOME/scripts/fzf-history.sh"
   alias hzh=fzf-history
 fi
 
